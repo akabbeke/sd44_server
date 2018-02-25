@@ -99,3 +99,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+config.yml
+.DS_store
+serverlog.txt
+*.db
