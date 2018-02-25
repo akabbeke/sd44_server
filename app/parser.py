@@ -197,8 +197,6 @@ class Game:
 
         self.game_session.start_game(self.user_instances)
 
-        assert False
-
         if not self.first_run:
             self.on_switch_to_game()
 
@@ -308,6 +306,7 @@ class Game:
             line = self.logfile_stream.readline()
             
             if line:
+                print line
                 line = filter(lambda x: x in printable, line)
                 # Test against event expressions
                 for pair in self.events.items():

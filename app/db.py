@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 
 from config import CONFIG
 
-engine = create_engine(CONFIG["database"], encoding='utf8')
+engine = create_engine(CONFIG["database"])
 engine.raw_connection().connection.text_factory = unicode
 Base = declarative_base()
 Base.metadata.bind = engine
