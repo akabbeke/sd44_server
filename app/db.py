@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import yaml
 import datetime
 
 from sqlalchemy import Text, DateTime, Boolean, Column, ForeignKey, Integer, String
@@ -8,7 +9,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
 
-engine = create_engine('sqlite:///game.db', encoding='utf8')
+from config import CONFIG
+
+engine = create_engine(CONFIG["database"], encoding='utf8')
 engine.raw_connection().connection.text_factory = unicode
 Base = declarative_base()
 Base.metadata.bind = engine
@@ -29,6 +32,15 @@ class User(Base):
     def __init__(self, *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
 
+    def game_count(self):
+        return len(session.query(UserGame).filter(UserGame.user==self).all())
+
+    def session_count(self):
+        return len(session.query(UserSession).filter(UserSession.user==self).all())
+
+    def leaver_count(self):
+        return len(session.query(UserGame).filter(UserGame.user==self, UserGame.is_leaver==True).all())
+
     def create_session(self, user_ip):
         new_session = UserSession(user=self, ip=user_ip)
         session.add(new_session)
@@ -36,11 +48,11 @@ class User(Base):
         return new_session
 
     def active_session(self):
-        session.query(UserSession).filter(UserSession.user == self, UserSession.active == True)
-
-    def kick(self):
-        pass
-               
+        res = session.query(UserSession).filter(UserSession.user == self, UserSession.is_active == True).all()
+        if res:
+            return res[0]
+        else:
+            return None
 
 class Deck(Base):
     __tablename__ = 'deck'
@@ -102,7 +114,7 @@ class UserSession(Base):
     is_kicked = Column(Boolean, unique=False, default=False)
     is_banned = Column(Boolean, unique=False, default=False)
     ip = Column(String(250))
-    team = Column(Integer)
+    team = Column(Integer, default=0)
     connected_at = Column(DateTime)
     disconnected_at = Column(DateTime)
     deck_id = Column(Integer, ForeignKey('deck.id'))
@@ -115,11 +127,11 @@ class UserSession(Base):
         self.connected_at = datetime.datetime.utcnow()
 
     def set_user_name(self, user_name):
-        self.user.level = user_name
+        self.user.name = user_name
         session.commit()
 
     def set_user_level(self, user_level):
-        self.user.name = user_level
+        self.user.level = user_level
         session.commit()
 
     def set_deck(self, deck_string):
@@ -147,7 +159,7 @@ class UserSession(Base):
         self.disconnected_at = datetime.datetime.utcnow()
         session.commit()
 
-    def change_team(self, side):
+    def swap(self):
         self.set_player_variable("PlayerAlliance", 0 if self.team == 1 else 1)
 
     def force_deck(self, deck_string):
@@ -188,10 +200,34 @@ class GameSession(Base):
         self.settings_blob = {}
         self.settings = json.dumps(self.settings_blob)
 
+    def __str__(self):
+        return "id: {}, active: {}, game_state: {}, lobby_time: {}, game_time: {}, leaver_count: {}".format(
+            self.id,
+            self.active,
+            self.game_state, 
+            self.lobby_time(),
+            self.game_time(),
+            self.leaver_count()
+        )
+    
+    def lobby_time(self):
+        if self.state == "running" or self.state == "complete":
+            return self.game_end_at -self.lobby_start_at
+        else:
+            return "n/a"
+    
+    def game_time(self):
+        if self.state == "complete":
+            return self.game_start_at -self.game_start_at
+        else:
+            return "n/a"
+
+    def leaver_count(self):
+        return len(session.query(UserGame).filter(UserGame.game==self, UserGame.is_leaver==True).all())
+
     def push_initial_settings(self, settings_blob):
         self.settings_blob = settings_blob
         self.settings = json.dumps(self.settings_blob)
-
 
     def start_game(self, user_sessions):
         self.game_state = "running"
@@ -208,6 +244,7 @@ class GameSession(Base):
         self.active = False
         new_session = GameSession()
         new_session.push_initial_settings(self.settings_blob)
+        session.add(new_session)
         session.commit()
         return new_session
 
@@ -217,18 +254,17 @@ class GameSession(Base):
             UserGame.game_session==self
         ).all()
         if existing:
-            existing[0].leaver = True
+            existing[0].is_leaver = True
             session.commit()
 
     def create_user_games(self, user_sessions):
-        user_games = []
+        print "creating User Games for {} users".format(len(user_sessions))
         for user_session in user_sessions:
-            user_games += [UserGame(
+            session.add(UserGame(
                 game_session=self,
                 user=user_session.user,
                 team=user_session.team
-            )]
-        session.bulk_save_objects(user_games)
+            ))
         session.commit()
 
     def set_settings(self, settings_update):
@@ -236,6 +272,10 @@ class GameSession(Base):
             self.settings_blob[key] = settings_update[key]
         self.settings = json.dumps(self.settings_blob)
         session.commit()
+
+    def set_server_setting(self, variable_name, variable_value):
+        from parser import Rcon
+        Rcon.execute("setsvar {} {}".format(variable_name, variable_value)) 
 
 
 class UserGame(Base):
@@ -249,18 +289,22 @@ class UserGame(Base):
     game_session_id = Column(Integer, ForeignKey('game_session.id'))
     game_session = relationship(GameSession)
     team = Column(Integer)
-    leaver = Column(Boolean, unique=False, default=False)
+    is_leaver = Column(Boolean, unique=False, default=False)
 
 
 Base.metadata.create_all(engine)
 
+def first_game_session():
+    first_session = GameSession()
+    session.add(first_session)
+    session.commit()
+    return first_session
+
 def get_user(eugen_id):
-    print eugen_id
     existing = session.query(User).filter(User.eugen_id==int(eugen_id)).all()
     if existing:
         return existing[0]
     else:
-        print "creating new"
         new_user = User(eugen_id=int(eugen_id))
         session.add(new_user)
         session.commit()

@@ -6,20 +6,21 @@ from time import sleep
 from subprocess import call
 from random import random
 from math import floor
-from db import session, User, UserSession, UserGame, GameSession, Deck, get_user
+
+from config import CONFIG
+from db import session, first_game_session, User, UserSession, UserGame, GameSession, Deck, get_user
 from rcon import MCRcon
 
 
 class Rcon:
     @classmethod
     def execute(cls, command):
-        with open("config.yml", 'r') as stream:
-            config = yaml.load(stream)["steel_division"]
+        
         client = MCRcon()
         client.connect(
-            config["ip"], 
-            config["port"],
-            config["password"]
+            CONFIG["rcon"]["ip"], 
+            CONFIG["rcon"]["port"],
+            CONFIG["rcon"]["password"]
         )
         client.command(command)
 
@@ -86,25 +87,11 @@ class Game:
     def map_random_rotate(self):
         """Rotate maps from the pool"""
         map_pool = [
-            "Destruction_2x2_port_Wonsan_Terrestre",
-            "Destruction_2x3_Hwaseong",
-            "Destruction_2x3_Esashi",
-            "Destruction_2x3_Boseong",
-            "Destruction_2x3_Tohoku",
-            "Destruction_2x3_Anbyon",
-            "Destruction_3x2_Boryeong_Terrestre",
-            "Destruction_3x2_Taean",
-            "Destruction_3x2_Taebuko",
-            "Destruction_3x2_Sangju",
-            "Destruction_3x2_Montagne_3",
-            "Destruction_3x3_Muju",
-            "Destruction_3x3_Pyeongtaek",
-            "Destruction_3x3_Gangjin"
+            "_3x2_Colombelles",
+            "_5x2_10v10_Pegaville",
         ]
 
-        self.currentMapId = floor(len(map_pool) * random())
-        Server.change_map(map_pool[self.currentMapId])
-        print("Rotating map to " + map_pool[self.currentMapId])
+        self.game_session.set_server_setting("Map", random.choice(map_pool))
 
     def limit_level(self, playerid, playerlevel):
         """Kick players below certain level"""
@@ -126,8 +113,6 @@ class Game:
 
         eugen_id = match_obj.group(1)
         user_ip = match_obj.group(4)
-
-        print eugen_id, user_ip
 
         user = get_user(eugen_id)
 
@@ -212,6 +197,8 @@ class Game:
 
         self.game_session.start_game(self.user_instances)
 
+        assert False
+
         if not self.first_run:
             self.on_switch_to_game()
 
@@ -267,9 +254,9 @@ class Game:
     def __init__(self):
         self.events = {}
         self.user_instances = {}
-        self.logfile_stream = open("serverlog.txt", "r")
+        self.logfile_stream = open(CONFIG["log_file"], "r")
         self.first_run = True
-        self.game_session = GameSession()
+        self.game_session = first_game_session()
         self.register_events()
 
         # Getting starting line
@@ -296,9 +283,14 @@ class Game:
         print("Gather information run is over")
         self.infoRun = False
 
+        print "Found {} Users".format(len(session.query(User).all()))
+        print "Found {} UserSessions".format(len(session.query(UserSession).all()))
+        print "Found {} UserGames".format(len(session.query(UserGame).all()))
+        print "Found {} GameSessions".format(len(session.query(GameSession).all()))
+        print "Found {} Decks".format(len(session.query(Deck).all()))
+
         print("Server control started")
 
-        print(self.game_session.settings_blob)
         while True:
             self.update()
             sleep(0.5)
@@ -317,7 +309,6 @@ class Game:
             
             if line:
                 line = filter(lambda x: x in printable, line)
-                print line
                 # Test against event expressions
                 for pair in self.events.items():
                     match = pair[0].match(line)

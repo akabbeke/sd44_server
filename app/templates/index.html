@@ -1,0 +1,75 @@
+<html>
+    
+    
+    <head>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <title>Player List</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+        <script src="static/js/main.js"></script>
+    </head>
+    <body>
+        <div class="jumbotron text-center">
+            <h1>Server Controls</h1>
+            <p>"With great power comes great resposibility... or some shit" - Abraham Lincon</p> 
+        </div>
+        <div class="container" ng-app="serverApp" ng-controller="UsersController">
+            <div class="row">
+                <h3> Allied</h3>
+                <table class="table table-hover table-sm" style="table-layout: fixed">
+                    <tr class="table-success">
+                        <th class="col-md-6">Username</th>
+                        <th class="col-md-2">Eugen ID</th>
+                        <th class="col-md-2">Player Level</th>
+                        <th class="col-md-2">Games</th>
+                        <th class="col-md-2">Sessions</th>
+                        <th class="col-md-2">Left</th>
+                        <th class="col-md-1">Kick</th>
+                        <th class="col-md-1">Swap</th>
+                        <th class="col-md-1">Ban</th>
+                    </tr>
+                    <tr ng-repeat="x in allied_users">
+                        <td class="col-md-6">{{ x.name }}</td>
+                        <td class="col-md-2">{{ x.eugen_id }}</td>
+                        <td class="col-md-2">{{ x.level }}</td>
+                        <td class="col-md-2">{{ x.game_count }}</td>
+                        <td class="col-md-2">{{ x.session_count }}</td>
+                        <td class="col-md-2">{{ x.leaver_count }}</td>
+                        <td class="col-md-1"><button type="button" data-ng-click="kick(x.eugen_id)">Kick</button></td>
+                        <td class="col-md-1"><button type="button" data-ng-click="swap(x.eugen_id)">Swap</button></td>
+                        <td class="col-md-1"><button type="button" data-ng-click="ban(x.eugen_id)">Ban</button></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="row">
+                <h3> Axis</h3>
+                <table class="table table-hover table-sm" style="table-layout: fixed">
+                    <tr class="table-success">
+                        <th class="col-md-6">Username</th>
+                        <th class="col-md-2">Eugen ID</th>
+                        <th class="col-md-2">Player Level</th>
+                        <th class="col-md-2">Games</th>
+                        <th class="col-md-2">Sessions</th>
+                        <th class="col-md-2">Left</th>
+                        <th class="col-md-1">Kick</th>
+                        <th class="col-md-1">Swap</th>
+                        <th class="col-md-1">Ban</th>
+                    </tr>
+                    <tr ng-repeat="x in axis_users">
+                        <td class="col-md-6">{{ x.name }}</td>
+                        <td class="col-md-2">{{ x.eugen_id }}</td>
+                        <td class="col-md-2">{{ x.level }}</td>
+                        <td class="col-md-2">{{ x.game_count }}</td>
+                        <td class="col-md-2">{{ x.session_count }}</td>
+                        <td class="col-md-2">{{ x.leaver_count }}</td>
+                        <td class="col-md-1"><button type="button" data-ng-click="kick(x.eugen_id)">Kick</button></td>
+                        <td class="col-md-1"><button type="button" data-ng-click="swap(x.eugen_id)">Swap</button></td>
+                        <td class="col-md-1"><button type="button" data-ng-click="ban(x.eugen_id)">Ban</button></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </body>
+</html>
