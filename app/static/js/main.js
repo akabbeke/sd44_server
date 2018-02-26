@@ -3,6 +3,8 @@ angular.module('serverApp', [])
         $scope.allied_users = []
         $scope.axis_users = []
 
+        console.log("kick")
+
         $scope.kick = function(eugen_id) {
             console.log("kick")
             $http.get("users/kick/".concat(eugen_id))
@@ -34,15 +36,15 @@ angular.module('serverApp', [])
         };
 
         $scope.reloadUsers = function() {
+            console.log("reload users")
             $http.get("users/current")
             .then(function (response) {
                 console.log(response)
                 $scope.allied_users = response.data.allied_users;
                 $scope.axis_users = response.data.axis_users;
+                $timeout( function(){ $scope.reloadUsers(); }, 3000);
             });
         }
 
         $scope.reloadUsers()
-
-        $interval( function(){ $scope.reloadUsers(); }, 30000);
     }]);

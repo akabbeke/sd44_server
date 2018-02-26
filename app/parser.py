@@ -316,6 +316,7 @@ class Game:
                         break
                 active_sessions = session.query(UserSession).filter(UserSession.is_active==True).all()
                 print "active_sessions: {}".format(len(active_sessions))
+                session.commit()
                 
             else:
                 break
