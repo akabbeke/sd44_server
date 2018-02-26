@@ -314,6 +314,9 @@ class Game:
                     if match:
                         pair[1](match)
                         break
+                active_sessions = session.query(UserSession).filter(UserSession.is_active==True).all()
+                print "active_sessions: {}".format(len(active_sessions))
+                
             else:
                 break
 

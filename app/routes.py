@@ -11,7 +11,6 @@ def index():
 @app.route('/users/current')
 def users_current():
     active_sessions = session.query(UserSession).filter(UserSession.is_active==True).all()
-    print active_sessions
     allied_users = [session_summary(x) for x in active_sessions if x.team == 0]
     axis_users = [session_summary(x) for x in active_sessions if x.team == 1]
     return jsonify({"axis_users": axis_users, "allied_users": allied_users})
