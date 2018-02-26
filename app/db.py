@@ -149,6 +149,9 @@ class UserSession(Base):
             session.add(new_deck)
             self.deck = new_deck
         session.commit()
+
+    def connected_time(self):
+        return datetime.datetime.utcnow() - self.connected_at
     
     def set_team(self, team):
         self.team = team

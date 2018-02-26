@@ -68,11 +68,27 @@ def find_user(eugen_id):
     else:
         return None
 
+def format_timedelta(delta):
+    s = delta.seconds
+    # hours
+    hours = s // 3600 
+    # remaining seconds
+    s = s - (hours * 3600)
+    # minutes
+    minutes = s // 60
+    # remaining seconds
+    seconds = s - (minutes * 60)
+    # total time
+    return '%s:%s:%s' % (hours, minutes, seconds)
+
 def session_summary(user_session):
     return {
         "name": user_session.user.name,
+        "level": user_session.user.level,
         "eugen_id": user_session.user.eugen_id,
         "game_count": user_session.user.game_count(),
         "session_count": user_session.user.session_count(),
-        "leaver_count": user_session.user.leaver_count()
+        "leaver_count": user_session.user.leaver_count(),
+        "connected_time": format_timedelta(user_session.connected_time()),
+        "battlegroup": user_session.deck.battlegroup
     }
