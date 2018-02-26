@@ -265,7 +265,7 @@ class GameSession(Base):
                 user=user_session.user,
                 team=user_session.team
             ))
-        session.commit()
+            session.commit()
 
     def set_settings(self, settings_update):
         for key in settings_update:
