@@ -11,6 +11,7 @@ def index():
 @app.route('/users/current')
 def users_current():
     active_sessions = session.query(UserSession).filter(UserSession.is_active==True).all()
+    print active_sessions
     allied_users = [session_summary(x) for x in active_sessions if x.team == 0]
     axis_users = [session_summary(x) for x in active_sessions if x.team == 1]
     return jsonify({"axis_users": axis_users, "allied_users": allied_users})
@@ -22,7 +23,7 @@ def users_kick(eugen_id):
         return jsonify({"success": False, "message": "could not find active session"})
     active_session = user.active_session()
     if active_session:
-        active_session.ban()
+        active_session.kick()
         return jsonify({"success": True, "message": "kicked {}".format(user.name)})
     else:
         return jsonify({"success": False, "message": "could not find active session"})

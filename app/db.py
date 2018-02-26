@@ -167,20 +167,20 @@ class UserSession(Base):
 
     def set_player_variable(self, variable_name, variable_value):
         from parser import Rcon
-        Rcon.execute("setpvar {} {} {}".format(self.user.user_id, variable_name, variable_value)) 
+        Rcon.execute("setpvar {} {} {}".format(self.user.eugen_id, variable_name, variable_value)) 
 
     def kick(self):
         from parser import Rcon
         self.is_kicked = True
         session.commit()
-        Rcon.execute("kick {}".format(self.user.user_id))
+        Rcon.execute("kick {}".format(self.user.eugen_id))
 
     def ban(self):
         from parser import Rcon
         self.is_banned = True
         self.user.is_banned = True
         session.commit()
-        Rcon.execute("ban {}".format(self.user.user_id))
+        Rcon.execute("ban {}".format(self.user.eugen_id))
 
 
 class GameSession(Base):
