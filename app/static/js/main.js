@@ -59,5 +59,5 @@ angular.module('serverApp', [])
         }
 
         $scope.reloadState();
-        $scope.interval = $interval( function(){ $scope.reloadState(); }, 1000);
+        $scope.interval = $interval( function(){ $scope.reloadState(); }, 5000);
     }]);
