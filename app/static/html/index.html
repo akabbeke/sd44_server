@@ -1,0 +1,41 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <title>Player List</title>
+</head>
+<body ng-app="serverApp" ng-controller="UsersController">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
+    <script src="static/js/main.js"></script>
+    
+    <!-- Angular Material Library -->
+    <div class="jumbotron text-center">
+        <h1>Server Controls</h1>
+        <h3>{{game_state.settings.ServerName}}</h3>
+        <div class="alert alert-warning" ng-show="server_status">
+            <strong>Warning!</strong> No connection to server.
+        </div>
+        <p>
+            Map: {{game_state.settings.Map}}, 
+            Status: {{game_state.game_state}}
+        </p>
+        <p>
+            Lobby Time: {{game_state.lobby_time}}, 
+            Game Time: {{game_state.game_time}}
+        </p>
+
+    </div>
+    <div style="text-align: center;">Last update at: {{update_time}}</div>
+    <div class="container" >
+        <div class="row">
+            <h3> Allied</h3>
+            <div ng-include="'static/html/player_list.html'" ng-repeat="users in [allied_users]"></div>
+        </div>
+        <div class="row">
+            <h3> Axis</h3>
+            <div ng-include="'static/html/player_list.html'" ng-repeat="users in [axis_users]"></div>
+        </div>
+    </div>
+</body>
+</html>

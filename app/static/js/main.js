@@ -2,8 +2,10 @@ angular.module('serverApp', [])
     .controller('UsersController', ['$scope', '$interval', '$http', function($scope, $interval, $http) {
         $scope.allied_users = []
         $scope.axis_users = []
-
-        console.log("kick")
+        $scope.game_state = {}
+        $scope.interval
+        $scope.server_down = false
+        $scope.update_time = Date()
 
         $scope.kick = function(eugen_id) {
             console.log("kick")
@@ -35,16 +37,27 @@ angular.module('serverApp', [])
             });
         };
 
-        $scope.reloadUsers = function() {
-            console.log("reload users")
+        $scope.reloadState = function() {
+            
             $http.get("users/current")
-            .then(function (response) {
-                console.log(response)
+            .then(function success(response) {
                 $scope.allied_users = response.data.allied_users;
                 $scope.axis_users = response.data.axis_users;
-                $timeout( function(){ $scope.reloadUsers(); }, 3000);
+                $scope.server_down = false
+            }, function error(response) {
+                $scope.server_down = true
+            });
+            $http.get("game/state")
+            .then(function success(response) {
+                $scope.game_state = response.data;
+                $scope.update_time = Date()
+                $scope.server_down = false
+            }, function error(response) {
+                $scope.update_time = Date()
+                $scope.server_down = true
             });
         }
 
-        $scope.reloadUsers()
+        $scope.reloadState();
+        $scope.interval = $interval( function(){ $scope.reloadState(); }, 1000);
     }]);

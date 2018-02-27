@@ -7,7 +7,7 @@ import datetime
 from sqlalchemy import Text, DateTime, Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc
 
 from config import CONFIG
 
@@ -134,6 +134,18 @@ class UserSession(Base):
         self.user.level = user_level
         session.commit()
 
+    def summary(self):
+        return {
+            "name": self.user.name,
+            "level": self.user.level,
+            "eugen_id": self.user.eugen_id,
+            "game_count": self.user.game_count(),
+            "session_count": self.user.session_count(),
+            "leaver_count": self.user.leaver_count(),
+            "connected_time": format_timedelta(self.connected_time()),
+            "battlegroup": self.deck.battlegroup
+        }
+
     def set_deck(self, deck_string):
         existing = session.query(Deck).filter(
             Deck.user==self.user, 
@@ -213,17 +225,32 @@ class GameSession(Base):
             self.leaver_count()
         )
     
+    def summary(self):
+        return {
+            "id": self.id,
+            "game_state": self.game_state,
+            "lobby_start_at": str(self.lobby_start_at),
+            "lobby_time": format_timedelta(self.lobby_time()),
+            "game_start_at": str(self.game_start_at),
+            "game_time": format_timedelta(self.game_time()),
+            "game_end_at": str(self.game_end_at),
+            "active": self.active,
+            "settings": json.loads(self.settings)
+        }
+
     def lobby_time(self):
-        if self.state == "running" or self.state == "complete":
-            return self.game_end_at -self.lobby_start_at
+        if self.game_start_at:
+            return self.game_start_at - self.lobby_start_at
         else:
-            return "n/a"
-    
+            return datetime.datetime.utcnow() - self.lobby_start_at
+
     def game_time(self):
-        if self.state == "complete":
-            return self.game_start_at -self.game_start_at
+        if self.game_state == "running":
+            return datetime.datetime.utcnow() - self.game_start_at
+        elif self.game_state == "complete":
+            return self.game_end_at - self.game_start_at
         else:
-            return "n/a"
+            return datetime.timedelta()
 
     def leaver_count(self):
         return len(session.query(UserGame).filter(UserGame.game==self, UserGame.is_leaver==True).all())
@@ -297,11 +324,27 @@ class UserGame(Base):
 
 Base.metadata.create_all(engine)
 
+def format_timedelta(delta):
+    s = delta.seconds
+    # hours
+    hours = s // 3600 
+    # remaining seconds
+    s = s - (hours * 3600)
+    # minutes
+    minutes = s // 60
+    # remaining seconds
+    seconds = s - (minutes * 60)
+    # total time
+    return '%s:%02d:%02d' % (hours, minutes, seconds)
+
 def first_game_session():
     first_session = GameSession()
     session.add(first_session)
     session.commit()
     return first_session
+
+def current_game_session():
+    return session.query(GameSession).order_by(desc(GameSession.id)).limit(1).all()[0]
 
 def get_user(eugen_id):
     existing = session.query(User).filter(User.eugen_id==int(eugen_id)).all()

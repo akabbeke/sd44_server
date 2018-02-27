@@ -22,7 +22,7 @@ class Rcon:
             CONFIG["rcon"]["port"],
             CONFIG["rcon"]["password"]
         )
-        client.command(command)
+        return client.command(command)
 
 
 class Game:

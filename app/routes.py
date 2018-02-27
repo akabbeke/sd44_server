@@ -1,19 +1,23 @@
 from app import app
 from collections import defaultdict
 from flask import render_template, jsonify, send_from_directory
-from db import session, UserSession, User
+from db import session, current_game_session, UserSession, User
 
 @app.route('/')
 def index():
     active_users = session.query(User).all()
-    return send_from_directory('templates', 'index.html')
+    return send_from_directory('static', 'html/index.html')
+
+@app.route('/game/state')
+def game_state():
+    return jsonify(current_game_session().summary())
 
 @app.route('/users/current')
 def users_current():
     session.commit()
     active_sessions = session.query(UserSession).filter(UserSession.is_active==True).all()
-    allied_users = [session_summary(x) for x in active_sessions if x.team == 0]
-    axis_users = [session_summary(x) for x in active_sessions if x.team == 1]
+    allied_users = [x.summary() for x in active_sessions if x.team == 0]
+    axis_users = [x.summary() for x in active_sessions if x.team == 1]
     session.commit()
     return jsonify({"axis_users": axis_users, "allied_users": allied_users})
 
@@ -67,28 +71,3 @@ def find_user(eugen_id):
         return res[0]
     else:
         return None
-
-def format_timedelta(delta):
-    s = delta.seconds
-    # hours
-    hours = s // 3600 
-    # remaining seconds
-    s = s - (hours * 3600)
-    # minutes
-    minutes = s // 60
-    # remaining seconds
-    seconds = s - (minutes * 60)
-    # total time
-    return '%s:%s:%s' % (hours, minutes, seconds)
-
-def session_summary(user_session):
-    return {
-        "name": user_session.user.name,
-        "level": user_session.user.level,
-        "eugen_id": user_session.user.eugen_id,
-        "game_count": user_session.user.game_count(),
-        "session_count": user_session.user.session_count(),
-        "leaver_count": user_session.user.leaver_count(),
-        "connected_time": format_timedelta(user_session.connected_time()),
-        "battlegroup": user_session.deck.battlegroup
-    }
